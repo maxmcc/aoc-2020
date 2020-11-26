@@ -54,14 +54,7 @@ impl Solve for PartTwo {
 
 aoc::main!();
 
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn regressions() {
-        let input = aoc::input!();
-        assert_eq!(PartOne::solve(&input).unwrap(), 3262991);
-        assert_eq!(PartTwo::solve(&input).unwrap(), 4891620);
-    }
+aoc::solved! {
+    PartOne = 3262991,
+    PartTwo = 4891620,
 }

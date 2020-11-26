@@ -40,18 +40,24 @@ macro_rules! input {
     }};
 }
 
-pub fn _input<P, I>(path: P) -> Result<I>
-where
-    P: AsRef<Path>,
-    I: FromStr,
-    <I as FromStr>::Err: Error + Send + Sync + 'static,
-{
-    let path = path.as_ref();
-    let text = std::fs::read_to_string(path)
-        .with_context(|| format!("failed to read input file:\n{}", path.display()))?;
-    text.parse::<I>()
-        .map_err(anyhow::Error::new)
-        .context("failed to parse input text")
+#[macro_export]
+macro_rules! solved {
+    ($($part:ty = $solution:expr),* $(,)?) => {
+        #[cfg(test)]
+        mod solutions {
+            use super::*;
+            #[test]
+            fn test_solutions() {
+                let input = $crate::input!();
+                $(
+                    assert_eq!(
+                        <$part as $crate::Solve>::solve(&input).unwrap(),
+                        $solution
+                    );
+                )*
+            }
+        }
+    }
 }
 
 pub fn _main<P, I, S1, S2>(path: P) -> Result<()>
@@ -71,4 +77,18 @@ where
     println!("Part Two: {}", part_two);
 
     Ok(())
+}
+
+pub fn _input<P, I>(path: P) -> Result<I>
+where
+    P: AsRef<Path>,
+    I: FromStr,
+    <I as FromStr>::Err: Error + Send + Sync + 'static,
+{
+    let path = path.as_ref();
+    let text = std::fs::read_to_string(path)
+        .with_context(|| format!("failed to read input file:\n{}", path.display()))?;
+    text.parse::<I>()
+        .map_err(anyhow::Error::new)
+        .context("failed to parse input text")
 }
