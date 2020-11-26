@@ -15,7 +15,7 @@ macro_rules! main {
     () => {
         fn main() -> $crate::Result<()> {
             let path = $crate::input_path!();
-            $crate::_main::<_, PartOne, PartTwo>(&path)
+            $crate::_main::<_, _, PartOne, PartTwo>(&path)
         }
     };
 }
@@ -54,14 +54,15 @@ where
         .context("failed to parse input text")
 }
 
-pub fn _main<I, S1, S2>(path: &Path) -> Result<()>
+pub fn _main<P, I, S1, S2>(path: P) -> Result<()>
 where
+    P: AsRef<Path>,
     I: FromStr,
     <I as FromStr>::Err: Error + Send + Sync + 'static,
     S1: Solve<Input = I>,
     S2: Solve<Input = I>,
 {
-    let input = _input(path)?;
+    let input = _input(path.as_ref())?;
 
     let part_one = S1::solve(&input).context("failed to solve part 1")?;
     println!("Part One: {}", part_one);
