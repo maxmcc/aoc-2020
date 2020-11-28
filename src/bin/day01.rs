@@ -18,8 +18,8 @@ impl FromStr for Masses {
 struct PartOne;
 
 impl PartOne {
-    fn module_fuel(module: &i32) -> i32 {
-        module / 3 - 2
+    fn fuel_for_mass(mass: i32) -> i32 {
+        mass / 3 - 2
     }
 }
 
@@ -28,18 +28,22 @@ impl Solve for PartOne {
     type Solution = i32;
 
     fn solve(input: &Masses) -> Result<Self::Solution> {
-        Ok(input.0.iter().map(Self::module_fuel).sum())
+        Ok(input.0.iter().copied().map(Self::fuel_for_mass).sum())
     }
 }
 
 struct PartTwo;
 
 impl PartTwo {
-    fn total_module_fuel(module: &i32) -> i32 {
-        let init = Some(PartOne::module_fuel(module));
-        std::iter::successors(init, |m| Some(PartOne::module_fuel(m)))
-            .take_while(|&m| m > 0)
-            .sum()
+    fn fuel_for_module(module_mass: i32) -> i32 {
+        let mut remaining = module_mass;
+        let mut total = 0;
+        while remaining > 2 {
+            let fuel = PartOne::fuel_for_mass(remaining).max(0);
+            total += fuel;
+            remaining = fuel;
+        }
+        total
     }
 }
 
@@ -48,7 +52,7 @@ impl Solve for PartTwo {
     type Solution = i32;
 
     fn solve(input: &Masses) -> Result<Self::Solution> {
-        Ok(input.0.iter().map(Self::total_module_fuel).sum())
+        Ok(input.0.iter().copied().map(Self::fuel_for_module).sum())
     }
 }
 

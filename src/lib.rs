@@ -6,7 +6,6 @@ pub use anyhow::Result;
 pub trait Solve {
     type Input;
     type Solution: Display;
-
     fn solve(input: &Self::Input) -> Result<Self::Solution>;
 }
 
@@ -68,7 +67,7 @@ where
     S1: Solve<Input = I>,
     S2: Solve<Input = I>,
 {
-    let input = _input(path.as_ref())?;
+    let input = _input(path)?;
 
     let part_one = S1::solve(&input).context("failed to solve part 1")?;
     println!("Part One: {}", part_one);
