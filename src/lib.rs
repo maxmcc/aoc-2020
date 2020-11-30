@@ -4,7 +4,7 @@ use std::{error::Error, fmt::Display, path::Path, str::FromStr};
 pub use anyhow::Result;
 
 pub trait Solve {
-    type Input;
+    type Input: FromStr;
     type Solution: Display;
     fn solve(input: &Self::Input) -> Result<Self::Solution>;
 }
