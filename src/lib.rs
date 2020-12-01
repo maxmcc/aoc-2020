@@ -40,6 +40,22 @@ macro_rules! input {
 }
 
 #[macro_export]
+macro_rules! lines {
+    (_private $out:tt) => {
+        concat! $out
+    };
+    (_private ($($out:tt)*) - $input:tt $($rest:tt)*) => {
+        lines!(_private ($($out)* concat!('-', $input), '\n',) $($rest)*)
+    };
+    (_private ($($out:tt)*) $input:tt $($rest:tt)*) => {
+        lines!(_private ($($out)* $input, '\n',) $($rest)*)
+    };
+    ($($t:tt)*) => {
+        lines!(_private () $($t)*)
+    };
+}
+
+#[macro_export]
 macro_rules! solved {
     ($($part:ty = $solution:expr),+ $(,)?) => {
         #[cfg(test)]

@@ -16,6 +16,8 @@ impl FromStr for ExpenseReport {
     }
 }
 
+const TARGET: i32 = 2020;
+
 struct PartOne;
 
 impl Solve for PartOne {
@@ -24,7 +26,7 @@ impl Solve for PartOne {
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
         for x in input.entries.iter() {
-            let y = 2020 - x;
+            let y = TARGET - x;
             if input.entries.contains(&y) {
                 return Ok(x * y);
             }
@@ -42,7 +44,7 @@ impl Solve for PartTwo {
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
         for x in input.entries.iter() {
             for y in input.entries.iter() {
-                let z = 2020 - x - y;
+                let z = TARGET - x - y;
                 if input.entries.contains(&z) {
                     return Ok(x * y * z);
                 }
@@ -53,6 +55,19 @@ impl Solve for PartTwo {
 }
 
 aoc::main!();
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use aoc::lines;
+
+    #[test]
+    fn test_example() {
+        let input = lines!(1721 979 366 299 675 1456).parse().unwrap();
+        assert_eq!(PartOne::solve(&input).unwrap(), 1721 * 299);
+        assert_eq!(PartTwo::solve(&input).unwrap(), 979 * 366 * 675);
+    }
+}
 
 aoc::solved! {
     PartOne = 1018944,
