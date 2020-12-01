@@ -41,7 +41,7 @@ macro_rules! input {
 
 #[macro_export]
 macro_rules! solved {
-    ($($part:ty = $solution:expr),* $(,)?) => {
+    ($($part:ty = $solution:expr),+ $(,)?) => {
         #[cfg(test)]
         mod solutions {
             use super::*;
@@ -53,7 +53,7 @@ macro_rules! solved {
                         <$part as $crate::Solve>::solve(&input).unwrap(),
                         $solution
                     );
-                )*
+                )+
             }
         }
     }
