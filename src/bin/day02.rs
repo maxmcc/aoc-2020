@@ -87,11 +87,6 @@ impl Solve for PartTwo {
 
 aoc::main!();
 
-aoc::solved! {
-    PartOne = 586,
-    PartTwo = 352,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -109,4 +104,9 @@ mod tests {
         assert_eq!(PartOne::solve(&input).unwrap(), 2);
         assert_eq!(PartTwo::solve(&input).unwrap(), 1);
     }
+}
+
+aoc::solved! {
+    PartOne = 586,
+    PartTwo = 352,
 }
