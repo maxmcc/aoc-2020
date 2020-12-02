@@ -59,11 +59,20 @@ aoc::main!();
 #[cfg(test)]
 mod tests {
     use super::*;
-    use aoc::lines;
+    use indoc::indoc;
 
     #[test]
     fn test_example() {
-        let input = lines!(1721 979 366 299 675 1456).parse().unwrap();
+        let input = indoc! {"
+            1721
+            979
+            366
+            299
+            675
+            1456
+        "}
+        .parse()
+        .unwrap();
         assert_eq!(PartOne::solve(&input).unwrap(), 1721 * 299);
         assert_eq!(PartTwo::solve(&input).unwrap(), 979 * 366 * 675);
     }

@@ -1,5 +1,5 @@
 use anyhow::{self, Context};
-use std::{error::Error, fmt::Display, path::Path, str::FromStr};
+use std::{fmt::Display, path::Path, str::FromStr};
 
 pub use anyhow::Result;
 
@@ -40,22 +40,6 @@ macro_rules! input {
 }
 
 #[macro_export]
-macro_rules! lines {
-    (_private $out:tt) => {
-        concat! $out
-    };
-    (_private ($($out:tt)*) - $input:tt $($rest:tt)*) => {
-        lines!(_private ($($out)* concat!('-', $input), '\n',) $($rest)*)
-    };
-    (_private ($($out:tt)*) $input:tt $($rest:tt)*) => {
-        lines!(_private ($($out)* $input, '\n',) $($rest)*)
-    };
-    ($($t:tt)*) => {
-        lines!(_private () $($t)*)
-    };
-}
-
-#[macro_export]
 macro_rules! solved {
     ($($part:ty = $solution:expr),+ $(,)?) => {
         #[cfg(test)]
@@ -79,7 +63,7 @@ pub fn _main<P, I, S1, S2>(path: P) -> Result<()>
 where
     P: AsRef<Path>,
     I: FromStr,
-    <I as FromStr>::Err: Error + Send + Sync + 'static,
+    anyhow::Error: From<I::Err>,
     S1: Solve<Input = I>,
     S2: Solve<Input = I>,
 {
@@ -98,12 +82,12 @@ pub fn _input<P, I>(path: P) -> Result<I>
 where
     P: AsRef<Path>,
     I: FromStr,
-    <I as FromStr>::Err: Error + Send + Sync + 'static,
+    anyhow::Error: From<I::Err>,
 {
     let path = path.as_ref();
     let text = std::fs::read_to_string(path)
         .with_context(|| format!("failed to read input file:\n{}", path.display()))?;
     text.parse::<I>()
-        .map_err(anyhow::Error::new)
+        .map_err(anyhow::Error::from)
         .context("failed to parse input text")
 }
