@@ -50,7 +50,7 @@ impl Solve for PartOne {
             .entries
             .iter()
             .filter(|entry| {
-                let count = entry.pass.chars().filter(|&it| it == entry.req).count();
+                let count = entry.pass.matches(entry.req).count();
                 count >= entry.min && count <= entry.max
             })
             .count())
