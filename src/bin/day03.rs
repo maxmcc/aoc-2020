@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use aoc::{self, Result, Solve};
 use std::str::FromStr;
 
@@ -7,9 +8,8 @@ enum Square {
     Tree,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct Map {
-    pos: (usize, usize),
     grid: Vec<Vec<Square>>,
 }
 
@@ -17,54 +17,71 @@ impl FromStr for Map {
     type Err = anyhow::Error;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let lines = input.lines().map(str::trim);
-        let grid = lines
-            .map(|line| {
-                line.chars()
-                    .map(|ch| match ch {
-                        '.' => Square::Open,
-                        '#' => Square::Tree,
-                        other => panic!("unknown square type {}", other),
-                    })
-                    .collect()
-            })
-            .collect();
-        Ok(Map { pos: (0, 0), grid })
+        fn parse_line(line: &str) -> Result<Vec<Square>> {
+            line.trim()
+                .chars()
+                .map(|ch| match ch {
+                    '.' => Ok(Square::Open),
+                    '#' => Ok(Square::Tree),
+                    other => Err(anyhow!("unknown char {:?}", other)),
+                })
+                .collect()
+        }
+        let grid = input.lines().map(parse_line).collect::<Result<_>>()?;
+        Ok(Map { grid })
     }
 }
 
 impl Map {
-    fn can_advance(&self) -> bool {
-        self.pos.1 < self.grid.len() - 1
-    }
-
-    fn advance(&mut self, right: usize, down: usize) {
-        self.pos.0 += right;
-        self.pos.1 += down;
-    }
-
-    fn square_at(&self, x: usize, y: usize) -> Square {
-        *self.grid[y].iter().cycle().nth(x).unwrap()
+    fn trajectory(&self, dx: usize, dy: usize) -> Trajectory {
+        Trajectory {
+            map: self,
+            x: 0,
+            y: 0,
+            dx,
+            dy,
+        }
     }
 }
+
+#[derive(Debug)]
+struct Trajectory<'a> {
+    map: &'a Map,
+    x: usize,
+    y: usize,
+    dx: usize,
+    dy: usize,
+}
+
+impl<'a> Trajectory<'a> {
+    fn tree_count(self) -> usize {
+        self.filter(|&it| it == Square::Tree).count()
+    }
+}
+
+impl Iterator for Trajectory<'_> {
+    type Item = Square;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.y >= self.map.grid.len() {
+            return None;
+        }
+        let row = self.map.grid[self.y].iter().cycle();
+        let square = row.copied().nth(self.x).unwrap();
+        self.x += self.dx;
+        self.y += self.dy;
+        Some(square)
+    }
+}
+
 struct PartOne;
 
 impl Solve for PartOne {
     type Input = Map;
-    type Solution = i32;
+    type Solution = usize;
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
-        let mut input = input.clone();
-
-        let mut count = 0;
-        while input.can_advance() {
-            input.advance(3, 1);
-            match input.square_at(input.pos.0, input.pos.1) {
-                Square::Tree => count += 1,
-                Square::Open => {}
-            }
-        }
-        Ok(count)
+        Ok(input.trajectory(3, 1).tree_count())
     }
 }
 
@@ -72,27 +89,45 @@ struct PartTwo;
 
 impl Solve for PartTwo {
     type Input = Map;
-    type Solution = i64;
+    type Solution = usize;
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
-        let mut total = 1;
-        for (right, down) in &[(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)] {
-            let mut input = input.clone();
-            let mut count = 0;
-            while input.can_advance() {
-                input.advance(*right, *down);
-                match input.square_at(input.pos.0, input.pos.1) {
-                    Square::Tree => count += 1,
-                    Square::Open => {}
-                }
-            }
-            total *= count;
-        }
-        Ok(total)
+        let slopes = &[(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)];
+        Ok(slopes
+            .iter()
+            .map(|&(dx, dy)| input.trajectory(dx, dy).tree_count())
+            .product())
     }
 }
 
 aoc::main!();
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use indoc::indoc;
+
+    #[test]
+    fn test_example() {
+        let input = indoc! {"
+            ..##.......
+            #...#...#..
+            .#....#..#.
+            ..#.#...#.#
+            .#...##..#.
+            ..#.##.....
+            .#.#.#....#
+            .#........#
+            #.##...#...
+            #...##....#
+            .#..#...#.#
+        "}
+        .parse()
+        .unwrap();
+        assert_eq!(PartOne::solve(&input).unwrap(), 7);
+        assert_eq!(PartTwo::solve(&input).unwrap(), 336);
+    }
+}
 
 aoc::solved! {
     PartOne = 274,
