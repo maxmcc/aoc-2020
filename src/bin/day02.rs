@@ -1,8 +1,8 @@
 use aoc::{self, Result, Solve};
-use scan_fmt::scan_fmt;
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(parse_display::FromStr, Debug)]
+#[display("{min}-{max} {req}: {pass}")]
 struct Entry {
     min: usize,
     max: usize,
@@ -10,21 +10,7 @@ struct Entry {
     pass: String,
 }
 
-impl FromStr for Entry {
-    type Err = anyhow::Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let (min, max, req, pass) = scan_fmt!(input, "{}-{} {}: {}", _, _, _, _)?;
-        Ok(Entry {
-            min,
-            max,
-            req,
-            pass,
-        })
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug)]
 struct Passwords {
     entries: Vec<Entry>,
 }
