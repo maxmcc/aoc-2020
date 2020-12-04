@@ -64,13 +64,14 @@ impl Iterator for Trajectory<'_> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.y >= self.map.grid.len() {
-            return None;
+            None
+        } else {
+            let row = &self.map.grid[self.y];
+            let square = row[self.x % row.len()];
+            self.x += self.dx;
+            self.y += self.dy;
+            Some(square)
         }
-        let row = self.map.grid[self.y].iter().cycle();
-        let square = row.copied().nth(self.x).unwrap();
-        self.x += self.dx;
-        self.y += self.dy;
-        Some(square)
     }
 }
 
