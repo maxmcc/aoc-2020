@@ -23,6 +23,7 @@ dependencies = [
  "indoc",
  "itertools",
  "parse-display",
+ "regex",
 ]
 
 [[package]]
