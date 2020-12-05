@@ -1,6 +1,7 @@
-use anyhow::{self, Context};
 use std::{fmt::Display, path::Path, str::FromStr};
 
+pub use anyhow::Context;
+pub use anyhow::Error;
 pub use anyhow::Result;
 
 pub trait Solve {
@@ -63,7 +64,7 @@ pub fn _main<P, I, S1, S2>(path: P) -> Result<()>
 where
     P: AsRef<Path>,
     I: FromStr,
-    anyhow::Error: From<I::Err>,
+    crate::Error: From<I::Err>,
     S1: Solve<Input = I>,
     S2: Solve<Input = I>,
 {
@@ -82,12 +83,12 @@ pub fn _input<P, I>(path: P) -> Result<I>
 where
     P: AsRef<Path>,
     I: FromStr,
-    anyhow::Error: From<I::Err>,
+    crate::Error: From<I::Err>,
 {
     let path = path.as_ref();
     let text = std::fs::read_to_string(path)
         .with_context(|| format!("failed to read input file:\n{}", path.display()))?;
     text.parse::<I>()
-        .map_err(anyhow::Error::from)
+        .map_err(Error::from)
         .context("failed to parse input text")
 }

@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use aoc::{self, Result, Solve};
+use aoc::{self, Error, Result, Solve};
 use std::str::FromStr;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -14,7 +14,7 @@ struct Map {
 }
 
 impl FromStr for Map {
-    type Err = anyhow::Error;
+    type Err = Error;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         fn parse_line(line: &str) -> Result<Vec<Square>> {

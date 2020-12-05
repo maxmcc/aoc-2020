@@ -1,4 +1,5 @@
-use aoc::{self, Result, Solve};
+use anyhow::{bail, ensure};
+use aoc::{self, Error, Result, Solve};
 use std::{collections::HashMap, convert::TryFrom, str::FromStr};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, parse_display::FromStr)]
@@ -39,7 +40,7 @@ struct PassportData {
 }
 
 impl FromStr for PassportData {
-    type Err = anyhow::Error;
+    type Err = Error;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let fields = input
@@ -48,7 +49,7 @@ impl FromStr for PassportData {
                 let mut split = field.split(':');
                 match (split.next(), split.next()) {
                     (Some(name), Some(data)) => Ok((name.parse()?, data.into())),
-                    _ => anyhow::bail!("invalid format {}", field),
+                    _ => bail!("invalid format {}", field),
                 }
             })
             .collect::<Result<_>>()?;
@@ -62,7 +63,7 @@ struct BatchFile {
 }
 
 impl FromStr for BatchFile {
-    type Err = anyhow::Error;
+    type Err = Error;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let passports = input.split("\n\n").map(str::parse).collect::<Result<_>>()?;
@@ -158,10 +159,10 @@ struct ValidPassport {
 }
 
 impl TryFrom<&PassportData> for ValidPassport {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(data: &PassportData) -> Result<Self, Self::Error> {
-        anyhow::ensure!(
+        ensure!(
             FieldName::REQUIRED_FIELDS
                 .iter()
                 .all(|field| data.fields.contains_key(field)),
@@ -301,5 +302,5 @@ mod tests {
 
 aoc::solved! {
     PartOne = 247,
-//    PartTwo = 145,
+    PartTwo = 145,
 }

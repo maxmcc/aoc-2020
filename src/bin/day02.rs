@@ -1,4 +1,4 @@
-use aoc::{self, Result, Solve};
+use aoc::{self, Error, Result, Solve};
 use std::str::FromStr;
 
 #[derive(parse_display::FromStr, Debug)]
@@ -16,7 +16,7 @@ struct Passwords {
 }
 
 impl FromStr for Passwords {
-    type Err = anyhow::Error;
+    type Err = Error;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let lines = input.lines().map(str::trim);

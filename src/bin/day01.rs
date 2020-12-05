@@ -1,3 +1,4 @@
+use anyhow::bail;
 use aoc::{self, Result, Solve};
 use std::{collections::HashSet, num::ParseIntError, str::FromStr};
 
@@ -31,7 +32,7 @@ impl Solve for PartOne {
                 return Ok(x * y);
             }
         }
-        anyhow::bail!("no two numbers found");
+        bail!("no two numbers found");
     }
 }
 
@@ -50,7 +51,7 @@ impl Solve for PartTwo {
                 }
             }
         }
-        anyhow::bail!("no three numbers found");
+        bail!("no three numbers found");
     }
 }
 
