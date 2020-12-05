@@ -3,30 +3,28 @@ use aoc::{self, Error, Result, Solve};
 use std::str::FromStr;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-struct BoardingPass {
+struct Seat {
     id: u32,
 }
 
-impl FromStr for BoardingPass {
+impl FromStr for Seat {
     type Err = Error;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let binary = input
-            .chars()
-            .map(|c| match c {
-                'F' | 'L' => Ok('0'),
-                'B' | 'R' => Ok('1'),
-                _ => bail!("unexpected char {:?}", c),
-            })
-            .collect::<Result<String>>()?;
-        Ok(BoardingPass {
-            id: u32::from_str_radix(&binary, 2)?,
-        })
+        let id = input.chars().try_fold(0, |acc, ch| {
+            let next = match ch {
+                'F' | 'L' => 0,
+                'B' | 'R' => 1,
+                _ => bail!("unexpected char {:?}", ch),
+            };
+            Ok((acc << 1) | next)
+        })?;
+        Ok(Seat { id })
     }
 }
 
 struct BoardingPasses {
-    passes: Vec<BoardingPass>,
+    seats: Vec<Seat>,
 }
 
 impl FromStr for BoardingPasses {
@@ -34,9 +32,9 @@ impl FromStr for BoardingPasses {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let lines = input.lines().map(str::trim);
-        let mut passes = lines.map(str::parse).collect::<Result<Vec<_>>>()?;
-        passes.sort_unstable();
-        Ok(BoardingPasses { passes })
+        let mut seats = lines.map(str::parse).collect::<Result<Vec<_>>>()?;
+        seats.sort_unstable();
+        Ok(BoardingPasses { seats })
     }
 }
 
@@ -48,7 +46,7 @@ impl Solve for PartOne {
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
         input
-            .passes
+            .seats
             .last()
             .map(|pass| pass.id)
             .ok_or_else(|| anyhow!("no maximum seat ID found"))
@@ -63,7 +61,7 @@ impl Solve for PartTwo {
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
         input
-            .passes
+            .seats
             .windows(2)
             .find_map(|seats| match seats {
                 // Empty seat will be the one after `left`.
@@ -82,10 +80,10 @@ mod tests {
 
     #[test]
     fn test_example() {
-        assert_eq!("FBFBBFFRLR".parse::<BoardingPass>().unwrap().id, 357);
-        assert_eq!("BFFFBBFRRR".parse::<BoardingPass>().unwrap().id, 567);
-        assert_eq!("FFFBBBFRRR".parse::<BoardingPass>().unwrap().id, 119);
-        assert_eq!("BBFFBBFRLL".parse::<BoardingPass>().unwrap().id, 820);
+        assert_eq!("FBFBBFFRLR".parse::<Seat>().unwrap().id, 357);
+        assert_eq!("BFFFBBFRRR".parse::<Seat>().unwrap().id, 567);
+        assert_eq!("FFFBBBFRRR".parse::<Seat>().unwrap().id, 119);
+        assert_eq!("BBFFBBFRLL".parse::<Seat>().unwrap().id, 820);
     }
 }
 
