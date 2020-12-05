@@ -109,10 +109,10 @@ mod field {
     #[derive(Copy, Clone, Debug, parse_display::FromStr)]
     pub enum Height {
         /// If cm: at least 150 and at most 193.
-        #[from_str(regex = r"\b(?P<0>1([5-8]\d|9[0-3]))cm\b")]
+        #[from_str(regex = r"^(?P<0>1([5-8]\d|9[0-3]))cm$")]
         Centimeters(u32),
         /// If in: at least 59 and at most 76.
-        #[from_str(regex = r"\b(?P<0>(59|6\d|7[0-6]))in\b")]
+        #[from_str(regex = r"^(?P<0>(59|6\d|7[0-6]))in$")]
         Inches(u32),
     }
 
