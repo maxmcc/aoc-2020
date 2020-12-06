@@ -65,7 +65,7 @@ impl Solve for PartTwo {
             .windows(2)
             .find_map(|seats| match seats {
                 // Empty seat will be the one after `left`.
-                &[left, right] if left.id + 1 != right.id => Some(left.id + 1),
+                [left, right] if left.id + 1 != right.id => Some(left.id + 1),
                 _ => None,
             })
             .ok_or_else(|| anyhow!("no empty seat found"))
