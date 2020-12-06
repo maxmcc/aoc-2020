@@ -1,4 +1,4 @@
-use std::{fmt::Display, path::Path, str::FromStr};
+use std::{fmt::Display, path::Path, str::FromStr, time::Instant};
 
 pub use anyhow::Context;
 pub use anyhow::Error;
@@ -68,13 +68,28 @@ where
     S1: Solve<Input = I>,
     S2: Solve<Input = I>,
 {
+    let input_start = Instant::now();
     let input = _input(path)?;
+    println!(
+        "Successfully parsed input  (completed in {:.0?})",
+        input_start.elapsed()
+    );
 
+    let part_one_start = Instant::now();
     let part_one = S1::solve(&input).context("failed to solve part 1")?;
-    println!("Part One: {}", part_one);
+    println!(
+        "Part One: {}  (completed in {:.0?})",
+        part_one,
+        part_one_start.elapsed()
+    );
 
+    let part_two_start = Instant::now();
     let part_two = S2::solve(&input).context("failed to solve part 2")?;
-    println!("Part Two: {}", part_two);
+    println!(
+        "Part Two: {}  (completed in {:.0?})",
+        part_two,
+        part_two_start.elapsed()
+    );
 
     Ok(())
 }
