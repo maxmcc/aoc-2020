@@ -1,3 +1,5 @@
+#![allow(unused_variables)]
+
 use aoc::{self, Error, Result, Solve};
 use std::str::FromStr;
 
@@ -38,14 +40,10 @@ aoc::main!();
 #[cfg(test)]
 mod tests {
     use super::*;
-    use indoc::indoc;
 
     #[test]
     fn test_example() {
-        let input: Input = indoc! {"
-        "}
-        .parse()
-        .unwrap();
+        let input: Input = "".parse().unwrap();
 
         assert_eq!(PartOne::solve(&input).unwrap(), 0);
         assert_eq!(PartTwo::solve(&input).unwrap(), 0);
