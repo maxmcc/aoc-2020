@@ -1,19 +1,14 @@
 use anyhow::ensure;
-use aoc::{self, Error, Result, Solve};
-use std::{
-    ops::{BitAnd, BitOr},
-    str::FromStr,
-};
+use aoc::{self, Parse, Result, Solve};
+use std::ops::{BitAnd, BitOr};
 
 #[derive(Clone, Debug)]
 struct CustomsForms {
     groups: Vec<Vec<u32>>,
 }
 
-impl FromStr for CustomsForms {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+impl Parse for CustomsForms {
+    fn parse(input: &str) -> Result<Self> {
         fn parse_answers(line: &str) -> Result<u32> {
             line.trim().chars().try_fold(0, |acc, ch| {
                 ensure!(('a'..='z').contains(&ch), "unexpected char {:?}", ch);
@@ -67,7 +62,7 @@ mod tests {
 
     #[test]
     fn test_example() {
-        let input: CustomsForms = indoc! {"
+        let input = CustomsForms::parse(indoc! {"
             abc
 
             a
@@ -83,8 +78,7 @@ mod tests {
             a
 
             b
-        "}
-        .parse()
+        "})
         .unwrap();
 
         assert_eq!(PartOne::solve(&input).unwrap(), 11);

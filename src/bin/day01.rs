@@ -1,16 +1,14 @@
 use anyhow::bail;
-use aoc::{self, Result, Solve};
-use std::{collections::HashSet, num::ParseIntError, str::FromStr};
+use aoc::{self, Parse, Result, Solve};
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 struct ExpenseReport {
     entries: HashSet<i32>,
 }
 
-impl FromStr for ExpenseReport {
-    type Err = ParseIntError;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+impl Parse for ExpenseReport {
+    fn parse(input: &str) -> Result<Self> {
         let lines = input.lines().map(str::trim);
         let entries = lines.map(str::parse).collect::<Result<_, _>>()?;
         Ok(ExpenseReport { entries })
@@ -64,15 +62,14 @@ mod tests {
 
     #[test]
     fn test_example() {
-        let input = indoc! {"
+        let input = ExpenseReport::parse(indoc! {"
             1721
             979
             366
             299
             675
             1456
-        "}
-        .parse()
+        "})
         .unwrap();
         assert_eq!(PartOne::solve(&input).unwrap(), 1721 * 299);
         assert_eq!(PartTwo::solve(&input).unwrap(), 979 * 366 * 675);

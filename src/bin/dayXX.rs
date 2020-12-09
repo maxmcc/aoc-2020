@@ -1,14 +1,12 @@
+#![allow(non_snake_case)]
 #![allow(unused_variables)]
 
-use aoc::{self, Error, Result, Solve};
-use std::str::FromStr;
+use aoc::{self, Parse, Result, Solve};
 
 struct Input;
 
-impl FromStr for Input {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+impl Parse for Input {
+    fn parse(input: &str) -> Result<Self> {
         unimplemented!()
     }
 }
@@ -40,10 +38,13 @@ aoc::main!();
 #[cfg(test)]
 mod tests {
     use super::*;
+    use indoc::indoc;
 
     #[test]
     fn test_example() {
-        let input: Input = "".parse().unwrap();
+        let input = Input::parse(indoc! {"
+        "})
+        .unwrap();
 
         assert_eq!(PartOne::solve(&input).unwrap(), 0);
         assert_eq!(PartTwo::solve(&input).unwrap(), 0);

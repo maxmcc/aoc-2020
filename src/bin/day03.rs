@@ -1,6 +1,5 @@
 use anyhow::anyhow;
-use aoc::{self, Error, Result, Solve};
-use std::str::FromStr;
+use aoc::{self, Parse, Result, Solve};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum Square {
@@ -13,10 +12,8 @@ struct Map {
     grid: Vec<Vec<Square>>,
 }
 
-impl FromStr for Map {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+impl Parse for Map {
+    fn parse(input: &str) -> Result<Self> {
         fn parse_line(line: &str) -> Result<Vec<Square>> {
             line.trim()
                 .chars()
@@ -110,7 +107,7 @@ mod test {
 
     #[test]
     fn test_example() {
-        let input = indoc! {"
+        let input = Map::parse(indoc! {"
             ..##.......
             #...#...#..
             .#....#..#.
@@ -122,8 +119,7 @@ mod test {
             #.##...#...
             #...##....#
             .#..#...#.#
-        "}
-        .parse()
+        "})
         .unwrap();
         assert_eq!(PartOne::solve(&input).unwrap(), 7);
         assert_eq!(PartTwo::solve(&input).unwrap(), 336);

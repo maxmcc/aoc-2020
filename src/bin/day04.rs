@@ -1,8 +1,9 @@
 use anyhow::{bail, ensure};
-use aoc::{self, Error, Result, Solve};
-use std::{collections::HashMap, convert::TryFrom, str::FromStr};
+use aoc::{self, Error, Parse, Result, Solve};
+use parse_display::FromStr;
+use std::{collections::HashMap, convert::TryFrom};
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, parse_display::FromStr)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, FromStr)]
 pub enum FieldName {
     #[display("byr")]
     BirthYear,
@@ -39,10 +40,8 @@ struct PassportData {
     fields: HashMap<FieldName, String>,
 }
 
-impl FromStr for PassportData {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+impl Parse for PassportData {
+    fn parse(input: &str) -> Result<Self> {
         let fields = input
             .split_whitespace()
             .map(|field| {
@@ -62,11 +61,12 @@ struct BatchFile {
     passports: Vec<PassportData>,
 }
 
-impl FromStr for BatchFile {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let passports = input.split("\n\n").map(str::parse).collect::<Result<_>>()?;
+impl Parse for BatchFile {
+    fn parse(input: &str) -> Result<Self> {
+        let passports = input
+            .split("\n\n")
+            .map(PassportData::parse)
+            .collect::<Result<_>>()?;
         Ok(BatchFile { passports })
     }
 }
@@ -91,23 +91,25 @@ impl Solve for PartOne {
 }
 
 mod field {
+    use parse_display::FromStr;
+
     /// Birth year: four digits, at least 1920 and at most 2002.
-    #[derive(Copy, Clone, Debug, parse_display::FromStr)]
+    #[derive(Copy, Clone, Debug, FromStr)]
     #[from_str(regex = r"^(?P<0>19[2-9]\d|200[0-2])$")]
     pub struct BirthYear(pub u32);
 
     /// Issue year: four digits, at least 2010 and at most 2020.
-    #[derive(Copy, Clone, Debug, parse_display::FromStr)]
+    #[derive(Copy, Clone, Debug, FromStr)]
     #[from_str(regex = r"^(?P<0>20(1\d|20))$")]
     pub struct IssueYear(pub u32);
 
     /// Expiration year: four digits, at leat 2020 and at most 2030.
-    #[derive(Copy, Clone, Debug, parse_display::FromStr)]
+    #[derive(Copy, Clone, Debug, FromStr)]
     #[from_str(regex = r"^(?P<0>20(2\d|30))$")]
     pub struct ExpirationYear(pub u32);
 
     /// Height: a number followed by either cm or in.
-    #[derive(Copy, Clone, Debug, parse_display::FromStr)]
+    #[derive(Copy, Clone, Debug, FromStr)]
     pub enum Height {
         /// If cm: at least 150 and at most 193.
         #[from_str(regex = r"^(?P<0>1([5-8]\d|9[0-3]))cm$")]
@@ -118,12 +120,12 @@ mod field {
     }
 
     /// Hair color: a '#' followed by exactly six characters 0-9 or a-f.
-    #[derive(Clone, Debug, parse_display::FromStr)]
+    #[derive(Clone, Debug, FromStr)]
     #[from_str(regex = r"^(?P<0>#[0-9a-f]{6})$")]
     pub struct HairColor(pub String);
 
     /// Eye color: exactly one of: amb blu brn gry grn hzl oth.
-    #[derive(Copy, Clone, Debug, parse_display::FromStr)]
+    #[derive(Copy, Clone, Debug, FromStr)]
     #[display(style = "lowercase")]
     pub enum EyeColor {
         Amb,
@@ -136,12 +138,12 @@ mod field {
     }
 
     /// A nine-digit number, including leading zeroes.
-    #[derive(Clone, Debug, parse_display::FromStr)]
+    #[derive(Clone, Debug, FromStr)]
     #[from_str(regex = r"^(?P<0>\d{9})$")]
     pub struct PassportId(pub String);
 
     /// Ignored, missing or not.
-    #[derive(Clone, Debug, parse_display::FromStr)]
+    #[derive(Clone, Debug, FromStr)]
     #[display("{0}")]
     pub struct CountryId(pub String);
 }
@@ -208,7 +210,7 @@ mod tests {
 
     #[test]
     fn test_example_part_one() {
-        let input: BatchFile = indoc! {"
+        let input = BatchFile::parse(indoc! {"
             ecl:gry pid:860033327 eyr:2020 hcl:#fffffd
             byr:1937 iyr:2017 cid:147 hgt:183cm
 
@@ -222,8 +224,7 @@ mod tests {
 
             hcl:#cfa07d eyr:2025 pid:166559648
             iyr:2011 ecl:brn hgt:59in
-        "}
-        .parse()
+        "})
         .unwrap();
 
         assert_eq!(PartOne::solve(&input).unwrap(), 2);
@@ -252,7 +253,7 @@ mod tests {
 
     #[test]
     fn test_invalid_example_part_two() {
-        let input: BatchFile = indoc! {"
+        let input = BatchFile::parse(indoc! {"
             eyr:1972 cid:100
             hcl:#18171d ecl:amb hgt:170 pid:186cm iyr:2018 byr:1926
 
@@ -266,8 +267,7 @@ mod tests {
             hgt:59cm ecl:zzz
             eyr:2038 hcl:74454a iyr:2023
             pid:3556412378 byr:2007
-        "}
-        .parse()
+        "})
         .unwrap();
 
         for data in input.passports {
@@ -277,7 +277,7 @@ mod tests {
 
     #[test]
     fn test_valid_passport_part_two() {
-        let input: BatchFile = indoc! {"
+        let input = BatchFile::parse(indoc! {"
             pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980
             hcl:#623a2f
 
@@ -290,8 +290,7 @@ mod tests {
             eyr:2022
 
             iyr:2010 hgt:158cm hcl:#b6652a ecl:blu byr:1944 eyr:2021 pid:093154719
-        "}
-        .parse()
+        "})
         .unwrap();
 
         for data in input.passports {

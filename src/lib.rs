@@ -1,11 +1,15 @@
-use std::{fmt::Display, path::Path, str::FromStr, time::Instant};
+use std::{fmt::Display, path::Path, time::Instant};
 
 pub use anyhow::Context;
 pub use anyhow::Error;
 pub use anyhow::Result;
 
+pub trait Parse: Sized {
+    fn parse(input: &str) -> Result<Self>;
+}
+
 pub trait Solve {
-    type Input: FromStr;
+    type Input: Parse;
     type Solution: Display;
     fn solve(input: &Self::Input) -> Result<Self::Solution>;
 }
@@ -42,17 +46,29 @@ macro_rules! input {
 
 #[macro_export]
 macro_rules! solved {
-    ($($part:ty = $solution:expr),+ $(,)?) => {
+    ($part1:ty = $soln1:expr) => { solved!($part1 = $soln1,) };
+    ($part1:ty = $soln1:expr, $($part2:ty = $soln2:expr),* $(,)?) => {
         #[cfg(test)]
         mod solutions {
             use super::*;
+            use $crate::{Solve, Parse};
+
             #[test]
             fn test_solutions() {
-                let input = $crate::input!();
+                let path = $crate::input_path!();
+                let text = std::fs::read_to_string(path)
+                    .expect("failed to read input file");
+                let input = <<$part1 as Solve>::Input as Parse>::parse(&text)
+                    .expect("failed to parse input text");
+                assert_eq!(
+                    <$part1 as Solve>::solve(&input).unwrap(),
+                    $soln1
+                );
+
                 $(
                     assert_eq!(
-                        <$part as $crate::Solve>::solve(&input).unwrap(),
-                        $solution
+                        <$part2 as Solve>::solve(&input).unwrap(),
+                        $soln2
                     );
                 )+
             }
@@ -63,13 +79,16 @@ macro_rules! solved {
 pub fn _main<P, I, S1, S2>(path: P) -> Result<()>
 where
     P: AsRef<Path>,
-    I: FromStr,
-    crate::Error: From<I::Err>,
+    I: Parse,
     S1: Solve<Input = I>,
     S2: Solve<Input = I>,
 {
+    let path = path.as_ref();
+    let text = std::fs::read_to_string(path)
+        .with_context(|| format!("failed to read input file:\n{}", path.display()))?;
+
     let input_start = Instant::now();
-    let input = _input(path)?;
+    let input = I::parse(&text).context("failed to parse input text")?;
     println!(
         "Successfully parsed input  (completed in {:.0?})",
         input_start.elapsed()
@@ -92,18 +111,4 @@ where
     );
 
     Ok(())
-}
-
-pub fn _input<P, I>(path: P) -> Result<I>
-where
-    P: AsRef<Path>,
-    I: FromStr,
-    crate::Error: From<I::Err>,
-{
-    let path = path.as_ref();
-    let text = std::fs::read_to_string(path)
-        .with_context(|| format!("failed to read input file:\n{}", path.display()))?;
-    text.parse::<I>()
-        .map_err(Error::from)
-        .context("failed to parse input text")
 }

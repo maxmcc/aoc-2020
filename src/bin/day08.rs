@@ -1,8 +1,8 @@
 use anyhow::bail;
-use aoc::{self, Error, Result, Solve};
-use std::str::FromStr;
+use aoc::{self, Parse, Result, Solve};
+use parse_display::FromStr;
 
-#[derive(Copy, Clone, Debug, parse_display::FromStr)]
+#[derive(Copy, Clone, Debug, FromStr)]
 enum Instr {
     #[display("acc {0}")]
     Acc(isize),
@@ -17,10 +17,8 @@ struct Program {
     instrs: Vec<Instr>,
 }
 
-impl FromStr for Program {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+impl Parse for Program {
+    fn parse(input: &str) -> Result<Self> {
         let lines = input.lines().map(str::trim);
         let instrs = lines.map(str::parse).collect::<Result<_, _>>()?;
         Ok(Program { instrs })
@@ -29,6 +27,7 @@ impl FromStr for Program {
 
 struct InfiniteLoop;
 
+#[derive(Clone, Debug)]
 struct Machine {
     accum: isize,
     instrs: Vec<Instr>,
@@ -124,7 +123,7 @@ mod tests {
 
     #[test]
     fn test_example() {
-        let input: Program = indoc! {"
+        let input = Program::parse(indoc! {"
             nop +0
             acc +1
             jmp +4
@@ -134,8 +133,7 @@ mod tests {
             acc +1
             jmp -4
             acc +6
-        "}
-        .parse()
+        "})
         .unwrap();
 
         assert_eq!(PartOne::solve(&input).unwrap(), 5);
