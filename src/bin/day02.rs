@@ -1,32 +1,32 @@
-use aoc::{self, Parse, Result, Solve};
-use parse_display::FromStr;
+use aoc::{Parse, Result, Solve};
+use reformation::Reformation;
 
-#[derive(Debug, FromStr)]
-#[display("{min}-{max} {req}: {pass}")]
-struct Entry {
+#[derive(Debug, Reformation)]
+#[reformation("{min}-{max} {req}: {pass}")]
+struct Entry<'a> {
     min: usize,
     max: usize,
     req: char,
-    pass: String,
+    pass: &'a str,
 }
 
 #[derive(Debug)]
-struct Passwords {
-    entries: Vec<Entry>,
+struct Passwords<'a> {
+    entries: Vec<Entry<'a>>,
 }
 
-impl Parse for Passwords {
-    fn parse(input: &str) -> Result<Self> {
+impl<'a> Parse<'a> for Passwords<'a> {
+    fn parse<'b: 'a>(input: &'b str) -> Result<Self> {
         let lines = input.lines().map(str::trim);
-        let entries = lines.map(str::parse).collect::<Result<_, _>>()?;
+        let entries = lines.map(Entry::parse).collect::<Result<_, _>>()?;
         Ok(Passwords { entries })
     }
 }
 
 struct PartOne;
 
-impl Solve for PartOne {
-    type Input = Passwords;
+impl<'a> Solve<'a> for PartOne {
+    type Input = Passwords<'a>;
     type Solution = usize;
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
@@ -43,8 +43,8 @@ impl Solve for PartOne {
 
 struct PartTwo;
 
-impl Solve for PartTwo {
-    type Input = Passwords;
+impl<'a> Solve<'a> for PartTwo {
+    type Input = Passwords<'a>;
     type Solution = usize;
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
@@ -60,15 +60,15 @@ impl Solve for PartTwo {
     }
 }
 
-aoc::main!();
+aoc::main!(day02);
 
 #[cfg(test)]
-mod tests {
+mod examples {
     use super::*;
     use indoc::indoc;
 
     #[test]
-    fn test_example() {
+    fn example() {
         let input = Passwords::parse(indoc! {"
             1-3 a: abcde
             1-3 b: cdefg
@@ -80,7 +80,4 @@ mod tests {
     }
 }
 
-aoc::solved! {
-    PartOne = 586,
-    PartTwo = 352,
-}
+aoc::solved!(day02, PartOne = 586, PartTwo = 352);

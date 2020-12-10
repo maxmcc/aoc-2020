@@ -1,14 +1,14 @@
 use anyhow::bail;
-use aoc::{self, Parse, Result, Solve};
+use aoc::{Parse, Result, Solve};
 use std::collections::HashSet;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug)]
 struct ExpenseReport {
     entries: HashSet<i32>,
 }
 
-impl Parse for ExpenseReport {
-    fn parse(input: &str) -> Result<Self> {
+impl<'a> Parse<'a> for ExpenseReport {
+    fn parse<'b: 'a>(input: &'b str) -> Result<Self> {
         let lines = input.lines().map(str::trim);
         let entries = lines.map(str::parse).collect::<Result<_, _>>()?;
         Ok(ExpenseReport { entries })
@@ -19,7 +19,7 @@ const TARGET: i32 = 2020;
 
 struct PartOne;
 
-impl Solve for PartOne {
+impl Solve<'_> for PartOne {
     type Input = ExpenseReport;
     type Solution = i32;
 
@@ -36,7 +36,7 @@ impl Solve for PartOne {
 
 struct PartTwo;
 
-impl Solve for PartTwo {
+impl Solve<'_> for PartTwo {
     type Input = ExpenseReport;
     type Solution = i32;
 
@@ -53,15 +53,15 @@ impl Solve for PartTwo {
     }
 }
 
-aoc::main!();
+aoc::main!(day01);
 
 #[cfg(test)]
-mod tests {
+mod examples {
     use super::*;
     use indoc::indoc;
 
     #[test]
-    fn test_example() {
+    fn example() {
         let input = ExpenseReport::parse(indoc! {"
             1721
             979
@@ -76,7 +76,4 @@ mod tests {
     }
 }
 
-aoc::solved! {
-    PartOne = 1018944,
-    PartTwo = 8446464,
-}
+aoc::solved!(day01, PartOne = 1018944, PartTwo = 8446464);

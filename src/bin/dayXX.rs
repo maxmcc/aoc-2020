@@ -1,47 +1,48 @@
 #![allow(non_snake_case)]
 #![allow(unused_variables)]
 
-use aoc::{self, Parse, Result, Solve};
+use anyhow::bail;
+use aoc::{Parse, Result, Solve};
 
 struct Input;
 
-impl Parse for Input {
-    fn parse(input: &str) -> Result<Self> {
-        unimplemented!()
+impl<'a> Parse<'a> for Input {
+    fn parse<'b: 'a>(input_str: &'b str) -> Result<Self> {
+        bail!("unimplemented");
     }
 }
 
 struct PartOne;
 
-impl Solve for PartOne {
+impl Solve<'_> for PartOne {
     type Input = Input;
-    type Solution = i32;
+    type Solution = u32;
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
-        unimplemented!()
+        Ok(0)
     }
 }
 
 struct PartTwo;
 
-impl Solve for PartTwo {
+impl<'a> Solve<'a> for PartTwo {
     type Input = Input;
-    type Solution = i32;
+    type Solution = u32;
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
-        unimplemented!()
+        Ok(0)
     }
 }
 
-aoc::main!();
+aoc::main!(day01);
 
 #[cfg(test)]
-mod tests {
+mod examples {
     use super::*;
     use indoc::indoc;
 
     #[test]
-    fn test_example() {
+    fn example() {
         let input = Input::parse(indoc! {"
         "})
         .unwrap();

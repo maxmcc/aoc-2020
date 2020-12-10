@@ -1,13 +1,13 @@
-use anyhow::anyhow;
-use aoc::{self, Parse, Result, Solve};
+use anyhow::{anyhow, ensure};
+use aoc::{Parse, Result, Solve};
 
 #[derive(Clone, Debug)]
 struct Cipher {
-    nums: Vec<i64>,
+    nums: Vec<u64>,
 }
 
-impl Parse for Cipher {
-    fn parse(input: &str) -> Result<Self> {
+impl<'a> Parse<'a> for Cipher {
+    fn parse<'b: 'a>(input: &'b str) -> Result<Self> {
         let lines = input.lines().map(str::trim);
         let nums = lines.map(str::parse).collect::<Result<_, _>>()?;
         Ok(Cipher { nums })
@@ -15,11 +15,11 @@ impl Parse for Cipher {
 }
 
 impl Cipher {
-    fn first_invalid(&self, len: usize) -> Option<i64> {
+    fn first_invalid(&self, len: usize) -> Option<u64> {
         self.nums.windows(len + 1).find_map(|window| {
             let target = window[len];
             for (i, &x) in window[..len].iter().enumerate() {
-                let y = target - x;
+                let y = target.wrapping_sub(x);
                 if x == y {
                     continue;
                 }
@@ -30,13 +30,27 @@ impl Cipher {
             Some(target)
         })
     }
+
+    fn summing_slice(&self, target: u64) -> &[u64] {
+        let (mut i, mut j, mut sum) = (0, 0, 0);
+        while sum != target {
+            if sum < target {
+                sum += self.nums[j];
+                j += 1;
+            } else {
+                sum -= self.nums[i];
+                i += 1;
+            }
+        }
+        &self.nums[i..j]
+    }
 }
 
 struct PartOne;
 
-impl Solve for PartOne {
+impl Solve<'_> for PartOne {
     type Input = Cipher;
-    type Solution = i64;
+    type Solution = u64;
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
         input
@@ -47,35 +61,29 @@ impl Solve for PartOne {
 
 struct PartTwo;
 
-impl Solve for PartTwo {
+impl Solve<'_> for PartTwo {
     type Input = Cipher;
-    type Solution = i64;
+    type Solution = u64;
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
-        const PART_ONE_ANSWER: i64 = 22406676;
-
-        for len in 2.. {
-            for slice in input.nums.windows(len) {
-                if slice.iter().sum::<i64>() == PART_ONE_ANSWER {
-                    let min = slice.iter().min().unwrap();
-                    let max = slice.iter().max().unwrap();
-                    return Ok(min + max);
-                }
-            }
-        }
-        anyhow::bail!("no such range found");
+        let target = 22406676; // Part 1 answer
+        let slice = input.summing_slice(target);
+        ensure!(slice.len() > 0, "slice must not be empty");
+        let min = slice.iter().min().unwrap();
+        let max = slice.iter().max().unwrap();
+        Ok(min + max)
     }
 }
 
-aoc::main!();
+aoc::main!(day09);
 
 #[cfg(test)]
-mod tests {
+mod examples {
     use super::*;
     use indoc::indoc;
 
     #[test]
-    fn test_example() {
+    fn example() {
         let input = Cipher::parse(indoc! {"
             35
             20
@@ -101,11 +109,13 @@ mod tests {
         .unwrap();
 
         assert_eq!(input.first_invalid(5).unwrap(), 127);
-        assert_eq!(PartTwo::solve(&input).unwrap(), 62);
+
+        let slice = input.summing_slice(127);
+        assert_eq!(
+            slice.iter().min().unwrap() + slice.iter().max().unwrap(),
+            62
+        );
     }
 }
 
-aoc::solved! {
-    PartOne = 22406676,
-    PartTwo = 2942387,
-}
+aoc::solved!(day09, PartOne = 22406676, PartTwo = 2942387);

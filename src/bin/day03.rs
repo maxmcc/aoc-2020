@@ -1,5 +1,5 @@
-use anyhow::anyhow;
-use aoc::{self, Parse, Result, Solve};
+use anyhow::bail;
+use aoc::{Parse, Result, Solve};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum Square {
@@ -8,31 +8,31 @@ enum Square {
 }
 
 #[derive(Debug)]
-struct Map {
+struct Terrain {
     grid: Vec<Vec<Square>>,
 }
 
-impl Parse for Map {
-    fn parse(input: &str) -> Result<Self> {
+impl<'a> Parse<'a> for Terrain {
+    fn parse<'b: 'a>(input: &'a str) -> Result<Self> {
         fn parse_line(line: &str) -> Result<Vec<Square>> {
             line.trim()
                 .chars()
                 .map(|ch| match ch {
                     '.' => Ok(Square::Open),
                     '#' => Ok(Square::Tree),
-                    other => Err(anyhow!("unknown char {:?}", other)),
+                    other => bail!("unexpected char {:?}", other),
                 })
                 .collect()
         }
         let grid = input.lines().map(parse_line).collect::<Result<_>>()?;
-        Ok(Map { grid })
+        Ok(Terrain { grid })
     }
 }
 
-impl Map {
+impl Terrain {
     fn trajectory(&self, dx: usize, dy: usize) -> Trajectory {
         Trajectory {
-            map: self,
+            terrain: self,
             x: 0,
             y: 0,
             dx,
@@ -43,7 +43,7 @@ impl Map {
 
 #[derive(Debug)]
 struct Trajectory<'a> {
-    map: &'a Map,
+    terrain: &'a Terrain,
     x: usize,
     y: usize,
     dx: usize,
@@ -60,10 +60,10 @@ impl Iterator for Trajectory<'_> {
     type Item = Square;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.y >= self.map.grid.len() {
+        if self.y >= self.terrain.grid.len() {
             None
         } else {
-            let row = &self.map.grid[self.y];
+            let row = &self.terrain.grid[self.y];
             let square = row[self.x % row.len()];
             self.x += self.dx;
             self.y += self.dy;
@@ -74,8 +74,8 @@ impl Iterator for Trajectory<'_> {
 
 struct PartOne;
 
-impl Solve for PartOne {
-    type Input = Map;
+impl Solve<'_> for PartOne {
+    type Input = Terrain;
     type Solution = usize;
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
@@ -85,8 +85,8 @@ impl Solve for PartOne {
 
 struct PartTwo;
 
-impl Solve for PartTwo {
-    type Input = Map;
+impl Solve<'_> for PartTwo {
+    type Input = Terrain;
     type Solution = usize;
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
@@ -98,16 +98,16 @@ impl Solve for PartTwo {
     }
 }
 
-aoc::main!();
+aoc::main!(day03);
 
 #[cfg(test)]
-mod test {
+mod examples {
     use super::*;
     use indoc::indoc;
 
     #[test]
-    fn test_example() {
-        let input = Map::parse(indoc! {"
+    fn example() {
+        let input = Terrain::parse(indoc! {"
             ..##.......
             #...#...#..
             .#....#..#.
@@ -126,7 +126,4 @@ mod test {
     }
 }
 
-aoc::solved! {
-    PartOne = 274,
-    PartTwo = 6050183040,
-}
+aoc::solved!(day03, PartOne = 274, PartTwo = 6050183040);

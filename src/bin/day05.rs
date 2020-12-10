@@ -1,13 +1,13 @@
 use anyhow::{anyhow, bail};
-use aoc::{self, Parse, Result, Solve};
+use aoc::{Parse, Result, Solve};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 struct Seat {
     id: u32,
 }
 
-impl Parse for Seat {
-    fn parse(input: &str) -> Result<Self> {
+impl<'a> Parse<'a> for Seat {
+    fn parse<'b: 'a>(input: &'b str) -> Result<Self> {
         let id = input.chars().try_fold(0, |acc, ch| {
             let next = match ch {
                 'F' | 'L' => 0,
@@ -25,8 +25,8 @@ struct BoardingPasses {
     seats: Vec<Seat>,
 }
 
-impl Parse for BoardingPasses {
-    fn parse(input: &str) -> Result<Self> {
+impl<'a> Parse<'a> for BoardingPasses {
+    fn parse<'b: 'a>(input: &'b str) -> Result<Self> {
         let lines = input.lines().map(str::trim);
         let mut seats = lines.map(Seat::parse).collect::<Result<Vec<_>>>()?;
         seats.sort_unstable();
@@ -36,7 +36,7 @@ impl Parse for BoardingPasses {
 
 struct PartOne;
 
-impl Solve for PartOne {
+impl Solve<'_> for PartOne {
     type Input = BoardingPasses;
     type Solution = u32;
 
@@ -51,7 +51,7 @@ impl Solve for PartOne {
 
 struct PartTwo;
 
-impl Solve for PartTwo {
+impl Solve<'_> for PartTwo {
     type Input = BoardingPasses;
     type Solution = u32;
 
@@ -68,14 +68,14 @@ impl Solve for PartTwo {
     }
 }
 
-aoc::main!();
+aoc::main!(day05);
 
 #[cfg(test)]
-mod tests {
+mod examples {
     use super::*;
 
     #[test]
-    fn test_example() {
+    fn example() {
         assert_eq!(Seat::parse("FBFBBFFRLR").unwrap().id, 357);
         assert_eq!(Seat::parse("BFFFBBFRRR").unwrap().id, 567);
         assert_eq!(Seat::parse("FFFBBBFRRR").unwrap().id, 119);
@@ -83,7 +83,4 @@ mod tests {
     }
 }
 
-aoc::solved! {
-    PartOne = 822,
-    PartTwo = 705,
-}
+aoc::solved!(day05, PartOne = 822, PartTwo = 705);
