@@ -22,6 +22,7 @@ dependencies = [
  "anyhow",
  "indoc",
  "itertools",
+ "lazy_static",
  "parse-display",
  "reformation",
  "regex",
