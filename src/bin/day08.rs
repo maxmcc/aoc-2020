@@ -1,5 +1,5 @@
 use anyhow::bail;
-use aoc::{self, Parse, Result, Solve};
+use aoc::{Parse, Result, Solve};
 use parse_display::FromStr;
 
 #[derive(Copy, Clone, Debug, FromStr)]
@@ -17,8 +17,8 @@ struct Program {
     instrs: Vec<Instr>,
 }
 
-impl Parse for Program {
-    fn parse(input: &str) -> Result<Self> {
+impl<'a> Parse<'a> for Program {
+    fn parse<'b: 'a>(input: &'b str) -> Result<Self> {
         let lines = input.lines().map(str::trim);
         let instrs = lines.map(str::parse).collect::<Result<_, _>>()?;
         Ok(Program { instrs })
@@ -76,7 +76,7 @@ impl Machine {
 
 struct PartOne;
 
-impl Solve for PartOne {
+impl Solve<'_> for PartOne {
     type Input = Program;
     type Solution = isize;
 
@@ -91,7 +91,7 @@ impl Solve for PartOne {
 
 struct PartTwo;
 
-impl Solve for PartTwo {
+impl Solve<'_> for PartTwo {
     type Input = Program;
     type Solution = isize;
 
@@ -114,15 +114,15 @@ impl Solve for PartTwo {
     }
 }
 
-aoc::main!();
+aoc::main!(day08);
 
 #[cfg(test)]
-mod tests {
+mod examples {
     use super::*;
     use indoc::indoc;
 
     #[test]
-    fn test_example() {
+    fn example() {
         let input = Program::parse(indoc! {"
             nop +0
             acc +1
@@ -141,7 +141,4 @@ mod tests {
     }
 }
 
-aoc::solved! {
-    PartOne = 1563,
-    PartTwo = 767,
-}
+aoc::solved!(day08, PartOne = 1563, PartTwo = 767);

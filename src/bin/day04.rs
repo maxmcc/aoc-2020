@@ -1,5 +1,5 @@
 use anyhow::{bail, ensure};
-use aoc::{self, Error, Parse, Result, Solve};
+use aoc::{Error, Parse, Result, Solve};
 use parse_display::FromStr;
 use std::{collections::HashMap, convert::TryFrom};
 
@@ -40,8 +40,8 @@ struct PassportData {
     fields: HashMap<FieldName, String>,
 }
 
-impl Parse for PassportData {
-    fn parse(input: &str) -> Result<Self> {
+impl<'a> Parse<'a> for PassportData {
+    fn parse<'b: 'a>(input: &'b str) -> Result<Self> {
         let fields = input
             .split_whitespace()
             .map(|field| {
@@ -61,8 +61,8 @@ struct BatchFile {
     passports: Vec<PassportData>,
 }
 
-impl Parse for BatchFile {
-    fn parse(input: &str) -> Result<Self> {
+impl<'a> Parse<'a> for BatchFile {
+    fn parse<'b: 'a>(input: &'b str) -> Result<Self> {
         let passports = input
             .split("\n\n")
             .map(PassportData::parse)
@@ -73,7 +73,7 @@ impl Parse for BatchFile {
 
 struct PartOne;
 
-impl Solve for PartOne {
+impl Solve<'_> for PartOne {
     type Input = BatchFile;
     type Solution = usize;
 
@@ -188,7 +188,7 @@ impl TryFrom<&PassportData> for ValidPassport {
 
 struct PartTwo;
 
-impl Solve for PartTwo {
+impl Solve<'_> for PartTwo {
     type Input = BatchFile;
     type Solution = usize;
 
@@ -201,7 +201,7 @@ impl Solve for PartTwo {
     }
 }
 
-aoc::main!();
+aoc::main!(day04);
 
 #[cfg(test)]
 mod tests {
@@ -209,7 +209,7 @@ mod tests {
     use indoc::indoc;
 
     #[test]
-    fn test_example_part_one() {
+    fn example_part_one() {
         let input = BatchFile::parse(indoc! {"
             ecl:gry pid:860033327 eyr:2020 hcl:#fffffd
             byr:1937 iyr:2017 cid:147 hgt:183cm
@@ -231,7 +231,7 @@ mod tests {
     }
 
     #[test]
-    fn test_examples_part_two() {
+    fn example_part_two_fields() {
         assert!("2002".parse::<field::BirthYear>().is_ok());
         assert!("2003".parse::<field::BirthYear>().is_err());
 
@@ -252,7 +252,7 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_example_part_two() {
+    fn example_part_two_invalid() {
         let input = BatchFile::parse(indoc! {"
             eyr:1972 cid:100
             hcl:#18171d ecl:amb hgt:170 pid:186cm iyr:2018 byr:1926
@@ -276,7 +276,7 @@ mod tests {
     }
 
     #[test]
-    fn test_valid_passport_part_two() {
+    fn example_part_two_valid() {
         let input = BatchFile::parse(indoc! {"
             pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980
             hcl:#623a2f
@@ -300,6 +300,7 @@ mod tests {
 }
 
 aoc::solved! {
+    day04,
     PartOne = 247,
     PartTwo = 145,
 }

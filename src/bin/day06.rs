@@ -1,5 +1,5 @@
 use anyhow::ensure;
-use aoc::{self, Parse, Result, Solve};
+use aoc::{Parse, Result, Solve};
 use std::ops::{BitAnd, BitOr};
 
 #[derive(Clone, Debug)]
@@ -7,8 +7,8 @@ struct CustomsForms {
     groups: Vec<Vec<u32>>,
 }
 
-impl Parse for CustomsForms {
-    fn parse(input: &str) -> Result<Self> {
+impl<'a> Parse<'a> for CustomsForms {
+    fn parse<'b: 'a>(input: &'b str) -> Result<Self> {
         fn parse_answers(line: &str) -> Result<u32> {
             line.trim().chars().try_fold(0, |acc, ch| {
                 ensure!(('a'..='z').contains(&ch), "unexpected char {:?}", ch);
@@ -25,7 +25,7 @@ impl Parse for CustomsForms {
 
 struct PartOne;
 
-impl Solve for PartOne {
+impl Solve<'_> for PartOne {
     type Input = CustomsForms;
     type Solution = u32;
 
@@ -40,7 +40,7 @@ impl Solve for PartOne {
 
 struct PartTwo;
 
-impl Solve for PartTwo {
+impl Solve<'_> for PartTwo {
     type Input = CustomsForms;
     type Solution = u32;
 
@@ -53,15 +53,15 @@ impl Solve for PartTwo {
     }
 }
 
-aoc::main!();
+aoc::main!(day06);
 
 #[cfg(test)]
-mod tests {
+mod examples {
     use super::*;
     use indoc::indoc;
 
     #[test]
-    fn test_example() {
+    fn example() {
         let input = CustomsForms::parse(indoc! {"
             abc
 
@@ -86,7 +86,4 @@ mod tests {
     }
 }
 
-aoc::solved! {
-    PartOne = 6630,
-    PartTwo = 3437,
-}
+aoc::solved!(day06, PartOne = 6630, PartTwo = 3437);
