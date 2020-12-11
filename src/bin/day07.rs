@@ -1,38 +1,18 @@
 use anyhow::bail;
 use aoc::{Parse, Result, Solve};
 use lazy_static::lazy_static;
-use regex::{Captures, Regex};
-use std::collections::{HashMap, HashSet};
-
-#[derive(Debug, Copy, Clone)]
-struct BagContents<'a> {
-    count: u32,
-    color: &'a str,
-}
-
-impl<'a> BagContents<'a> {
-    fn new(count: u32, color: &'a str) -> Self {
-        BagContents { count, color }
-    }
-}
+use regex::Regex;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 struct BagRule<'a> {
     color: &'a str,
-    contents: Vec<BagContents<'a>>,
-}
-
-impl<'a> BagRule<'a> {
-    fn new(color: &'a str) -> Self {
-        BagRule {
-            color,
-            contents: Vec::new(),
-        }
-    }
+    contents: HashMap<&'a str, u32>,
 }
 
 lazy_static! {
-    static ref CONTENTS_RE: Regex = Regex::new(r"(?P<count>\d+) (?P<color>\w+ \w+) bags?").unwrap();
+    static ref BAG_CONTENTS_REGEX: Regex =
+        Regex::new(r"(?P<count>\d+) (?P<color>\w+ \w+) bags?").unwrap();
 }
 
 impl<'a> Parse<'a> for BagRule<'a> {
@@ -42,14 +22,11 @@ impl<'a> Parse<'a> for BagRule<'a> {
             (Some(color), Some(contents)) => (color, contents),
             _ => bail!("could not split line: {:?}", input_str),
         };
-        let contents = CONTENTS_RE
+        let contents = BAG_CONTENTS_REGEX
             .captures_iter(contents)
-            .map(|captures: Captures| {
-                let (count, color) = match (captures.name("count"), captures.name("color")) {
-                    (Some(count), Some(color)) => (count.as_str().parse()?, color.as_str()),
-                    _ => bail!("failed to match 'count' and 'color'"),
-                };
-                Ok(BagContents { count, color })
+            .map(|caps| match (caps.name("color"), caps.name("count")) {
+                (Some(color), Some(count)) => Ok((color.as_str(), count.as_str().parse()?)),
+                _ => bail!("failed to match count and color in captures: {:?}", caps),
             })
             .collect::<Result<_>>()?;
         Ok(BagRule { color, contents })
@@ -57,42 +34,20 @@ impl<'a> Parse<'a> for BagRule<'a> {
 }
 
 #[derive(Debug)]
-struct BagRules<'a>(HashMap<&'a str, BagRule<'a>>);
+struct BagRules<'a> {
+    rules: HashMap<&'a str, BagRule<'a>>,
+}
 
 impl<'a> Parse<'a> for BagRules<'a> {
     fn parse<'b: 'a>(input_str: &'b str) -> Result<Self> {
         let lines = input_str.lines().map(str::trim);
         let rules = lines
             .map(|line| {
-                let bag = BagRule::parse(line)?;
-                Ok((bag.color, bag))
+                let rule = BagRule::parse(line)?;
+                Ok((rule.color, rule))
             })
             .collect::<Result<_>>()?;
-        Ok(BagRules(rules))
-    }
-}
-
-impl BagRules<'_> {
-    fn reversed(&self) -> BagRules {
-        let inverted = self.0.iter().flat_map(|(outer, rule)| {
-            rule.contents.iter().map(move |contents| {
-                let invert = BagContents::new(contents.count, outer);
-                (contents.color, invert)
-            })
-        });
-        let mut rules = HashMap::new();
-        for (inner, contents) in inverted {
-            rules
-                .entry(inner)
-                .or_insert_with(|| BagRule::new(inner))
-                .contents
-                .push(contents)
-        }
-        BagRules(rules)
-    }
-
-    fn contents(&self, bag: &str) -> Option<&[BagContents]> {
-        self.0.get(bag).map(|rule| &rule.contents[..])
+        Ok(BagRules { rules })
     }
 }
 
@@ -100,24 +55,31 @@ struct PartOne;
 
 impl<'a> Solve<'a> for PartOne {
     type Input = BagRules<'a>;
-    type Solution = u32;
+    type Solution = usize;
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
-        fn run<'a>(rules: &'a BagRules, bag: &'a str, seen: &mut HashSet<&'a str>) -> u32 {
-            if seen.insert(bag) == false {
-                return 0; // Already counted.
-            }
-            match rules.contents(bag) {
-                None => 1,
-                Some(contents) => {
-                    1 + contents
-                        .iter()
-                        .map(|contents| run(rules, contents.color, seen))
-                        .sum::<u32>()
-                }
-            }
+        fn can_hold_gold<'a>(
+            rules: &'a HashMap<&str, BagRule>,
+            bag: &'a str,
+            cache: &mut HashMap<&'a str, bool>,
+        ) -> bool {
+            cache.get(bag).copied().unwrap_or_else(|| {
+                let mut contents = rules[bag].contents.keys();
+                let ans = contents.any(|bag| can_hold_gold(rules, bag, cache));
+                cache.insert(bag, ans);
+                ans
+            })
         }
-        Ok(run(&input.reversed(), "shiny gold", &mut HashSet::new()) - 1)
+
+        let mut cache = HashMap::new();
+        cache.insert("shiny gold", true);
+        let count = input
+            .rules
+            .keys()
+            .copied()
+            .filter(|bag| can_hold_gold(&input.rules, bag, &mut cache))
+            .count();
+        Ok(count - 1)
     }
 }
 
@@ -128,18 +90,15 @@ impl<'a> Solve<'a> for PartTwo {
     type Solution = u32;
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
-        fn run<'a>(rules: &'a BagRules, bag: &'a str) -> u32 {
-            match rules.contents(bag) {
-                None => 1,
-                Some(contents) => {
-                    1 + contents
-                        .iter()
-                        .map(|contents| contents.count * run(rules, contents.color))
-                        .sum::<u32>()
-                }
-            }
+        fn total_bags(rules: &HashMap<&str, BagRule>, bag: &str) -> u32 {
+            1 + rules[bag]
+                .contents
+                .iter()
+                .map(|(bag, count)| count * total_bags(rules, bag))
+                .sum::<u32>()
         }
-        Ok(run(&input, "shiny gold") - 1)
+        let count = total_bags(&input.rules, "shiny gold");
+        Ok(count - 1)
     }
 }
 
