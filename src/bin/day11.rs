@@ -47,7 +47,7 @@ impl SeatLayout {
         use std::convert::TryFrom;
         let row = usize::try_from(row).ok()?;
         let col = usize::try_from(col).ok()?;
-        if (0..self.seats.len()).contains(&row) && (0..self.seats[0].len()).contains(&col) {
+        if row < self.seats.len() && col < self.seats[0].len() {
             Some(self.seats[row][col])
         } else {
             None
@@ -68,7 +68,7 @@ impl SeatLayout {
     fn occupied_visible(&self, row: usize, col: usize) -> usize {
         DIRECTIONS
             .iter()
-            .map(|(dr, dc)| -> Option<Position> {
+            .map(|(dr, dc)| {
                 for dist in 1.. {
                     let row = row as isize + dist * dr;
                     let col = col as isize + dist * dc;
