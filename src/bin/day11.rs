@@ -4,18 +4,8 @@ use aoc::{Parse, Result, Solve};
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum Position {
     Floor,
-    Empty,
-    Occupied,
-}
-
-impl Position {
-    fn is_empty(&self) -> bool {
-        matches!(self, Position::Empty)
-    }
-
-    fn is_occupied(&self) -> bool {
-        matches!(self, Position::Occupied)
-    }
+    EmptySeat,
+    OccupiedSeat,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -25,19 +15,18 @@ struct SeatLayout {
 
 impl<'a> Parse<'a> for SeatLayout {
     fn parse<'b: 'a>(input_str: &'b str) -> Result<Self> {
+        fn parse_line(line: &str) -> Result<Vec<Position>> {
+            line.chars()
+                .map(|ch| match ch {
+                    '.' => Ok(Position::Floor),
+                    'L' => Ok(Position::EmptySeat),
+                    '#' => Ok(Position::OccupiedSeat),
+                    _ => bail!("unexpected char {:?}", ch),
+                })
+                .collect()
+        }
         let lines = input_str.lines().map(str::trim);
-        let seats = lines
-            .map(|line| {
-                line.chars()
-                    .map(|ch| match ch {
-                        '.' => Ok(Position::Floor),
-                        'L' => Ok(Position::Empty),
-                        '#' => Ok(Position::Occupied),
-                        _ => bail!("unexpected char {:?}", ch),
-                    })
-                    .collect::<Result<Vec<_>>>()
-            })
-            .collect::<Result<_>>()?;
+        let seats = lines.map(parse_line).collect::<Result<_>>()?;
         Ok(SeatLayout { seats })
     }
 }
@@ -54,116 +43,88 @@ const DIRECTIONS: [(isize, isize); 8] = [
 ];
 
 impl SeatLayout {
-    fn get(&self, row: isize, col: isize) -> Option<Position> {
-        if (0..self.seats.len() as isize).contains(&row)
-            && (0..self.seats[0].len() as isize).contains(&col)
-        {
-            Some(self.seats[row as usize][col as usize])
+    fn checked_get(&self, row: isize, col: isize) -> Option<Position> {
+        use std::convert::TryFrom;
+        let row = usize::try_from(row).ok()?;
+        let col = usize::try_from(col).ok()?;
+        if (0..self.seats.len()).contains(&row) && (0..self.seats[0].len()).contains(&col) {
+            Some(self.seats[row][col])
         } else {
             None
         }
     }
 
-    fn neighbors<'a>(&'a self, row: isize, col: isize) -> impl Iterator<Item = Position> + 'a {
+    fn occupied_moore(&self, row: usize, col: usize) -> usize {
         DIRECTIONS
             .iter()
-            .flat_map(move |(dy, dx)| self.get(row + dy, col + dx))
-    }
-
-    // TODO: Memoize the indices generated here.
-    fn visible_seats(&'a self, row: usize, col: usize) -> impl Iterator<Item = Position> + 'a {
-        let rows = self.seats.len();
-        let cols = self.seats[0].len();
-
-        let up = (0..row).rev().map(|r| (r, col));
-        let down = (row + 1..rows).map(|r| (r, col));
-        let left = (0..col).rev().map(|c| (row, c));
-        let right = (col + 1..cols).map(|c| (row, c));
-
-        let up_r = (0..row).rev().zip(col + 1..cols);
-        let dn_r = (row + 1..rows).zip(col + 1..cols);
-
-        let up_l = (0..row).rev().zip((0..col).rev());
-        let dn_l = (row + 1..rows).zip((0..col).rev());
-
-        fn find(seats: &SeatLayout, mut iter: impl Iterator<Item = (usize, usize)>) -> Position {
-            iter.find_map(|(r, c)| match seats.seats[r][c] {
-                Position::Empty => None,
-                seat => Some(seat),
+            .map(|(dr, dc)| {
+                let (row, col) = (row as isize + dr, col as isize + dc);
+                self.checked_get(row, col)
             })
-            .unwrap_or(Position::Empty)
-        }
-
-        vec![
-            find(self, up),
-            find(self, down),
-            find(self, left),
-            find(self, right),
-            find(self, up_r),
-            find(self, dn_r),
-            find(self, up_l),
-            find(self, dn_l),
-        ]
+            .filter(|&pos| pos == Some(Position::OccupiedSeat))
+            .count()
     }
 
-    fn step_one(&self) -> Self {
-        let mut update = self.clone();
-        for row in 0..self.seats.len() {
-            for col in 0..self.seats[row].len() {
-                let seat = &mut update.seats[row][col];
-                match self.seats[row][col] {
-                    Position::Empty
-                        if self
-                            .neighbors(row, col)
-                            .all(|&seat| seat != Position::Occupied) =>
-                    {
-                        *seat = Position::Occupied;
+    fn occupied_visible(&self, row: usize, col: usize) -> usize {
+        DIRECTIONS
+            .iter()
+            .map(|(dr, dc)| -> Option<Position> {
+                for dist in 1.. {
+                    let row = row as isize + dist * dr;
+                    let col = col as isize + dist * dc;
+                    match self.checked_get(row, col) {
+                        None => return None,
+                        Some(Position::Floor) => continue,
+                        Some(seat) => return Some(seat),
                     }
-                    Position::Occupied
-                        if self
-                            .neighbors(row, col)
-                            .filter(|&&seat| seat == Position::Occupied)
-                            .count()
-                            >= 4 =>
-                    {
-                        *seat = Position::Empty;
-                    }
-                    _ => {}
                 }
+                None
+            })
+            .filter(|&pos| pos == Some(Position::OccupiedSeat))
+            .count()
+    }
+}
+
+#[derive(Debug)]
+struct Simulator<O, R> {
+    read: SeatLayout,
+    write: SeatLayout,
+    occupied: O,
+    rule: R,
+}
+
+impl<O, R> Simulator<O, R>
+where
+    O: Fn(&SeatLayout, usize, usize) -> usize,
+    R: Fn(Position, usize) -> Position,
+{
+    fn step(&mut self) {
+        for row in 0..self.read.seats.len() {
+            for col in 0..self.read.seats[row].len() {
+                let pos = self.read.seats[row][col];
+                let occupied = (self.occupied)(&self.read, row, col);
+                self.write.seats[row][col] = (self.rule)(pos, occupied);
             }
         }
-        update
+        std::mem::swap(&mut self.read, &mut self.write);
     }
 
-    fn step_two(&self) -> Self {
-        let mut update = self.clone();
-        for row in 0..self.seats.len() {
-            for col in 0..self.seats[row].len() {
-                let seat = &mut update.seats[row][col];
-                match self.seats[row][col] {
-                    Position::Empty
-                        if self
-                            .first_visible_seat(row, col)
-                            .iter()
-                            .all(|&seat| seat != Position::Occupied) =>
-                    {
-                        *seat = Position::Occupied;
-                    }
-                    Position::Occupied
-                        if self
-                            .first_visible_seat(row, col)
-                            .iter()
-                            .filter(|&&seat| seat == Position::Occupied)
-                            .count()
-                            >= 5 =>
-                    {
-                        *seat = Position::Empty;
-                    }
-                    _ => {}
-                }
+    fn run(&mut self) {
+        loop {
+            self.step();
+            if self.read == self.write {
+                break;
             }
         }
-        update
+    }
+
+    fn occupied_count(&self) -> usize {
+        self.read
+            .seats
+            .iter()
+            .flatten()
+            .filter(|&&seat| seat == Position::OccupiedSeat)
+            .count()
     }
 }
 
@@ -174,21 +135,24 @@ impl Solve<'_> for PartOne {
     type Solution = usize;
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
-        let mut seats = input.clone();
-        loop {
-            let next = seats.step_one();
-            if next == seats {
-                break;
+        fn rule(position: Position, occupied: usize) -> Position {
+            match position {
+                Position::OccupiedSeat if occupied >= 4 => Position::EmptySeat,
+                Position::EmptySeat if occupied == 0 => Position::OccupiedSeat,
+                other => other,
             }
-            seats = next;
         }
 
-        Ok(seats
-            .seats
-            .iter()
-            .flatten()
-            .filter(|&&seat| seat == Position::Occupied)
-            .count())
+        let mut sim = Simulator {
+            read: input.clone(),
+            write: input.clone(),
+            occupied: SeatLayout::occupied_moore,
+            rule,
+        };
+
+        sim.run();
+
+        Ok(sim.occupied_count())
     }
 }
 
@@ -199,21 +163,24 @@ impl<'a> Solve<'a> for PartTwo {
     type Solution = usize;
 
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
-        let mut seats = input.clone();
-        loop {
-            let next = seats.step_two();
-            if next == seats {
-                break;
+        fn rule(position: Position, occupied: usize) -> Position {
+            match position {
+                Position::OccupiedSeat if occupied >= 5 => Position::EmptySeat,
+                Position::EmptySeat if occupied == 0 => Position::OccupiedSeat,
+                other => other,
             }
-            seats = next;
         }
 
-        Ok(seats
-            .seats
-            .iter()
-            .flatten()
-            .filter(|&&seat| seat == Position::Occupied)
-            .count())
+        let mut sim = Simulator {
+            read: input.clone(),
+            write: input.clone(),
+            occupied: SeatLayout::occupied_visible,
+            rule,
+        };
+
+        sim.run();
+
+        Ok(sim.occupied_count())
     }
 }
 
@@ -240,41 +207,9 @@ mod examples {
         "})
         .unwrap();
 
-        assert_eq!(
-            input.step_one(),
-            SeatLayout::parse(indoc! {"
-                #.##.##.##
-                #######.##
-                #.#.#..#..
-                ####.##.##
-                #.##.##.##
-                #.#####.##
-                ..#.#.....
-                ##########
-                #.######.#
-                #.#####.##
-            "})
-            .unwrap()
-        );
-
-        assert_eq!(
-            input.step_one().step_one(),
-            SeatLayout::parse(indoc! {"
-                #.LL.L#.##
-                #LLLLLL.L#
-                L.L.L..L..
-                #LLL.LL.L#
-                #.LL.LL.LL
-                #.LLLL#.##
-                ..L.L.....
-                #LLLLLLLL#
-                #.LLLLLL.L
-                #.#LLLL.##
-            "})
-            .unwrap()
-        );
-
         assert_eq!(PartOne::solve(&input).unwrap(), 37);
         assert_eq!(PartTwo::solve(&input).unwrap(), 26);
     }
 }
+
+aoc::solved!(day11, PartOne = 2324, PartTwo = 2068);
