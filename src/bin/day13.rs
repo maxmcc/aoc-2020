@@ -54,7 +54,7 @@ impl Solve<'_> for PartOne {
 
 struct PartTwo;
 
-impl<'a> Solve<'a> for PartTwo {
+impl Solve<'_> for PartTwo {
     type Input = BusSchedule;
     type Solution = u64;
 
