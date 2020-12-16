@@ -12,7 +12,7 @@ impl<'a> Parse<'a> for CustomsForms {
         fn parse_answers(line: &str) -> Result<u32> {
             line.trim().chars().try_fold(0, |acc, ch| {
                 ensure!(('a'..='z').contains(&ch), "unexpected char {:?}", ch);
-                Ok(acc | (1 << ch as u8 - b'a'))
+                Ok(acc | 1 << (ch as u8 - b'a'))
             })
         }
         let groups = input

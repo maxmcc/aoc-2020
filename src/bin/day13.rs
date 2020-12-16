@@ -22,7 +22,7 @@ impl<'a> Parse<'a> for BusSchedule {
         let buses = lines
             .next()
             .ok_or_else(|| anyhow!("no buses"))?
-            .split(",")
+            .split(',')
             .enumerate()
             .filter(|&(_, bus)| bus != "x")
             .map(|(index, bus)| {

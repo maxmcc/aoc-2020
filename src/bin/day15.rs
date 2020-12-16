@@ -8,7 +8,7 @@ struct MemoryGame {
 impl<'a> Parse<'a> for MemoryGame {
     fn parse<'b: 'a>(input_str: &'b str) -> Result<Self> {
         let start = input_str
-            .split(",")
+            .split(',')
             .map(str::parse)
             .collect::<Result<_, _>>()?;
         Ok(MemoryGame { start })

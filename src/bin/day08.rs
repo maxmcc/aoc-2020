@@ -83,7 +83,7 @@ impl Solve<'_> for PartOne {
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
         let mut machine = Machine::new(&input.instrs);
         match machine.run() {
-            Err(InfiniteLoop) => return Ok(machine.accum),
+            Err(InfiniteLoop) => Ok(machine.accum),
             Ok(()) => bail!("machine failed to infinite loop"),
         }
     }

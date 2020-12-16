@@ -121,10 +121,10 @@ impl Memory for MemV2 {
         ) -> Result<()> {
             match mask.chars().nth(bit) {
                 Some('0') => write_rec(mem, mask, addr, val, bit + 1),
-                Some('1') => write_rec(mem, mask, addr | (1 << 35 - bit), val, bit + 1),
+                Some('1') => write_rec(mem, mask, addr | (1 << (35 - bit)), val, bit + 1),
                 Some('X') => {
-                    write_rec(mem, mask, addr & !(1 << 35 - bit), val, bit + 1)?;
-                    write_rec(mem, mask, addr | (1 << 35 - bit), val, bit + 1)
+                    write_rec(mem, mask, addr & !(1 << (35 - bit)), val, bit + 1)?;
+                    write_rec(mem, mask, addr | (1 << (35 - bit)), val, bit + 1)
                 }
                 _ => {
                     mem.insert(addr, val);

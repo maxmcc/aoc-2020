@@ -1,3 +1,5 @@
+#![warn(clippy::all)]
+
 use std::{fmt::Display, time::Instant};
 
 pub use anyhow::{Context, Error, Result};

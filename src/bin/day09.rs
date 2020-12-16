@@ -1,4 +1,4 @@
-use anyhow::{anyhow, ensure};
+use anyhow::{anyhow, bail};
 use aoc::{Parse, Result, Solve};
 
 #[derive(Clone, Debug)]
@@ -68,10 +68,10 @@ impl Solve<'_> for PartTwo {
     fn solve(input: &Self::Input) -> Result<Self::Solution> {
         let target = 22406676; // Part 1 answer
         let slice = input.summing_slice(target);
-        ensure!(slice.len() > 0, "slice must not be empty");
-        let min = slice.iter().min().unwrap();
-        let max = slice.iter().max().unwrap();
-        Ok(min + max)
+        match (slice.iter().min(), slice.iter().max()) {
+            (Some(min), Some(max)) => Ok(min + max),
+            _ => bail!("no summing slice found"),
+        }
     }
 }
 
