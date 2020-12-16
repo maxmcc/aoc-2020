@@ -17,7 +17,7 @@ impl<'a> Parse<'a> for MemoryGame {
 
 impl MemoryGame {
     fn nth(&self, n: usize) -> u32 {
-        let mut said = vec![u32::MAX; n as usize];
+        let mut said = vec![u32::MAX; n];
         for (turn, &num) in self.start.iter().enumerate() {
             said[num as usize] = turn as u32;
         }
